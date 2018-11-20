@@ -4,8 +4,8 @@
   "private": true,
   "dependencies": {
     "@gxl/react-scripts": "2.2.5",
-    "react": "^16.6.3",
-    "react-dom": "^16.6.3"
+    "react": "^16.7.0-alpha.2",
+    "react-dom": "^16.7.0-alpha.2"
   },
   "scripts": {
     "start": "react-scripts start",
