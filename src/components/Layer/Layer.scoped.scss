@@ -1,0 +1,7 @@
+.layer {
+  padding: 10px 20px;
+  border-bottom: 1px solid #999;
+  &--selected {
+    background: #ddd;
+  }
+}
