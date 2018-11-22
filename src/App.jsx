@@ -5,6 +5,7 @@ import PanelButton from './components/PanelButton/PanelButton'
 import Layer from './components/Layer/Layer'
 import userImmerState from './hooks/useImmerState'
 import './App.scoped.scss'
+import Canvas from './components/Canvas/Canvas'
 
 const App = () => {
   const createLayer = initialState => {
@@ -23,6 +24,7 @@ const App = () => {
   }
 
   const canvasRef = useRef(null)
+  const canvasRef2 = useRef(null)
   const { current: self } = useRef({})
   const [activeTool, setTool] = useState(null)
   const [layers, updateLayers] = userImmerState([])
@@ -57,6 +59,7 @@ const App = () => {
       y: e.pageY,
     }
     self.lastImg = img
+    console.log(canvasRef2)
   }
 
   const handleMouseMove = e => {
@@ -89,6 +92,7 @@ const App = () => {
         }}
       />
       <canvas width="500" height="500" ref={canvasRef} />
+      <Canvas ref={canvasRef2} layers={layers} width="500" height="500" />
       <div className="right-panels">
         <Panel
           title="Layers"
