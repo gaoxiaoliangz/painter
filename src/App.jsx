@@ -66,13 +66,15 @@ const App = () => {
   }, [])
 
   const handleMouseDown = e => {
-    self.isDown = true
-    const img = activeLayer.imageData
-    self.startDot = {
-      x: e.pageX,
-      y: e.pageY,
+    if (activeLayer) {
+      self.isDown = true
+      const img = activeLayer.imageData
+      self.startDot = {
+        x: e.pageX,
+        y: e.pageY,
+      }
+      self.lastImg = img
     }
-    self.lastImg = img
   }
 
   const handleMouseMove = e => {
@@ -159,9 +161,19 @@ const App = () => {
                 {...layer}
                 onChange={layerState => {
                   updateLayers(draftLayers => {
-                    draftLayers[idx] = {
-                      ...draftLayers[idx],
-                      ...layerState,
+                    if (layerState.selected !== undefined) {
+                      draftLayers.forEach((layer, idx2) => {
+                        if (idx !== idx2) {
+                          layer.selected = false
+                        } else {
+                          layer.selected = layerState.selected
+                        }
+                      })
+                    } else {
+                      draftLayers[idx] = {
+                        ...draftLayers[idx],
+                        ...layerState,
+                      }
                     }
                   })
                 }}
