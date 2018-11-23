@@ -7,6 +7,7 @@ import userImmerState from './hooks/useImmerState'
 import './App.scoped.scss'
 import Canvas from './components/Canvas/Canvas'
 import { objectToImageData, mergeImageData } from './core/canvas'
+import ColorPicker from './components/ColorPicker/ColorPicker'
 
 const App = () => {
   const createLayer = initialState => {
@@ -29,6 +30,7 @@ const App = () => {
   const canvasRef = useRef(null)
   const { current: self } = useRef({})
   const [activeTool, setTool] = useState(null)
+  const [color, setColor] = useState('#000000')
   const [layers, updateLayers] = userImmerState([])
   const selectedLayers = layers.filter(l => l.selected)
   const activeLayer = selectedLayers.length === 1 ? selectedLayers[0] : null
@@ -82,7 +84,7 @@ const App = () => {
           y: self.startDot.y,
           width: e.pageX - self.startDot.x,
           height: e.pageY - self.startDot.y,
-          color: 'green',
+          color,
         })
         updateLayer({
           id: activeLayer.id,
@@ -167,6 +169,14 @@ const App = () => {
               />
             )
           })}
+        </Panel>
+        <Panel title="Color">
+          <ColorPicker
+            value={color}
+            onChange={e => {
+              setColor(e.hex)
+            }}
+          />
         </Panel>
       </div>
     </div>
