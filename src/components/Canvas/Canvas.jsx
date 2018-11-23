@@ -7,12 +7,17 @@ const shapesToImageData = shapes => {
   if (!shapes || shapes.length === 0) {
     return null
   }
-  return mergeImageData(...shapes.map(objectToImageData))
+  return mergeImageData(
+    shapes.map(objectToImageData).map(imageData => ({ imageData }))
+  )
 }
 
-const layerToImageData = ({ shapes, imageData }) => {
+const layerToImageData = ({ shapes, imageData, offset }) => {
   if (imageData) {
-    return mergeImageData(imageData, shapesToImageData(shapes))
+    return mergeImageData([
+      { imageData },
+      { imageData: shapesToImageData(shapes) },
+    ])
   }
   return shapesToImageData(shapes)
 }
@@ -39,11 +44,14 @@ const Canvas = React.forwardRef(({ layers, ...rest }, ref) => {
       ctx = self.ctx
     }
     const imageData = mergeImageData(
-      ...reverse(
+      reverse(
         layers
           .filter(layer => layer.visible)
-          .map(layerToImageData)
-          .filter(Boolean)
+          .map(layer => ({
+            imageData: layerToImageData(layer.imageData),
+            offset: layer.offset,
+          }))
+          .filter(obj => (obj.imageData))
       )
     )
     if (imageData) {

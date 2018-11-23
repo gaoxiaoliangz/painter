@@ -23,13 +23,14 @@ const App = () => {
       selected: false,
       shapes: [],
       imageData: null,
+      offset: [0, 0],
       ...initialState,
     }
   }
 
   const canvasRef = useRef(null)
   const { current: self } = useRef({})
-  const [activeTool, setTool] = useState(null)
+  const [activeTool, setTool] = useState('rect')
   const [color, setColor] = useState('#000000')
   const [layers, updateLayers] = userImmerState([])
   const selectedLayers = layers.filter(l => l.selected)
@@ -79,21 +80,35 @@ const App = () => {
 
   const handleMouseMove = e => {
     if (self.isDown) {
-      if (activeTool === 'rect') {
-        const imageData = objectToImageData({
-          type: 'rect',
-          x: self.startDot.x,
-          y: self.startDot.y,
-          width: e.pageX - self.startDot.x,
-          height: e.pageY - self.startDot.y,
-          color,
-        })
-        updateLayer({
-          id: activeLayer.id,
-          imageData: self.lastImg
-            ? mergeImageData(self.lastImg, imageData)
-            : imageData,
-        })
+      switch (activeTool) {
+        case 'rect':
+          {
+            const imageData = objectToImageData({
+              type: 'rect',
+              x: self.startDot.x,
+              y: self.startDot.y,
+              width: e.pageX - self.startDot.x,
+              height: e.pageY - self.startDot.y,
+              color,
+            })
+            updateLayer({
+              id: activeLayer.id,
+              imageData: self.lastImg
+                ? mergeImageData([{ imageData: self.lastImg }, { imageData }])
+                : imageData,
+            })
+          }
+          break
+
+        case 'move':
+          updateLayer({
+            id: activeLayer.id,
+            offset: [e.pageX - self.startDot.x, e.pageY - self.startDot.y],
+          })
+          break
+
+        default:
+          throw new Error(`Unknown tool ${activeTool}`)
       }
     }
   }

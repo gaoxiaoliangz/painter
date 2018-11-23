@@ -60,16 +60,17 @@ const getCanvasWithImageData = imageData => {
   return canvas
 }
 
-export const mergeImageData = (...imageDataArr) => {
+export const mergeImageData = imageDataArr => {
   console.time(`merging ${imageDataArr.length}`)
   const canvas = offscreenCanvases.mergeImageData
   const ctx = canvas.getContext('2d')
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-  imageDataArr.forEach(imgData => {
-    if (!imgData) {
+  imageDataArr.forEach(obj => {
+    if (!obj || !obj.imageData) {
       return
     }
-    ctx.drawImage(getCanvasWithImageData(imgData), 0, 0)
+    const { imageData, offset } = obj
+    ctx.drawImage(getCanvasWithImageData(imageData), ...(offset || [0, 0]))
   })
   console.timeEnd(`merging ${imageDataArr.length}`)
   const result = ctx.getImageData(0, 0, canvas.width, canvas.height)
