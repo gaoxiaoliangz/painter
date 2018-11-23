@@ -6,6 +6,7 @@ import Layer from './components/Layer/Layer'
 import userImmerState from './hooks/useImmerState'
 import './App.scoped.scss'
 import Canvas from './components/Canvas/Canvas'
+import { objectToImageData, mergeImageData } from './core/canvas'
 
 const App = () => {
   const createLayer = initialState => {
@@ -19,62 +20,76 @@ const App = () => {
       label: `New layer ${id}`,
       visible: true,
       selected: false,
+      shapes: [],
+      imageData: null,
       ...initialState,
     }
   }
 
   const canvasRef = useRef(null)
-  const canvasRef2 = useRef(null)
   const { current: self } = useRef({})
   const [activeTool, setTool] = useState(null)
   const [layers, updateLayers] = userImmerState([])
+  const selectedLayers = layers.filter(l => l.selected)
+  const activeLayer = selectedLayers.length === 1 ? selectedLayers[0] : null
+
+  const updateLayer = layer => {
+    updateLayers(draftLayers => {
+      return draftLayers.map(l => {
+        return l.id === layer.id
+          ? {
+              ...l,
+              ...layer,
+            }
+          : l
+      })
+    })
+  }
 
   self.state = {
     activeTool,
+    activeLayer,
+    updateLayers,
+    updateLayer,
   }
 
   useEffect(() => {
-    window.addEventListener('mousedown', handleMouseDown)
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-    self.ctx = canvasRef.current.getContext('2d')
+    self.ctx = canvasRef.current.canvas.getContext('2d')
     updateLayers(draftLayers => [
       createLayer({
         selected: true,
       }),
       ...draftLayers,
     ])
-
-    return () => {
-      // @todo: clean up
-    }
   }, [])
 
   const handleMouseDown = e => {
     self.isDown = true
-    const { ctx } = self
-    const img = ctx.getImageData(0, 0, 500, 500)
+    const img = activeLayer.imageData
     self.startDot = {
       x: e.pageX,
       y: e.pageY,
     }
     self.lastImg = img
-    console.log(canvasRef2)
   }
 
   const handleMouseMove = e => {
-    const { activeTool } = self.state
     if (self.isDown) {
       if (activeTool === 'rect') {
-        const { ctx } = self
-        self.ctx.fillStyle = 'red'
-        ctx.putImageData(self.lastImg, 0, 0)
-        self.ctx.fillRect(
-          self.startDot.x,
-          self.startDot.y,
-          e.pageX - self.startDot.x,
-          e.pageY - self.startDot.y
-        )
+        const imageData = objectToImageData({
+          type: 'rect',
+          x: self.startDot.x,
+          y: self.startDot.y,
+          width: e.pageX - self.startDot.x,
+          height: e.pageY - self.startDot.y,
+          color: 'green',
+        })
+        updateLayer({
+          id: activeLayer.id,
+          imageData: self.lastImg
+            ? mergeImageData(self.lastImg, imageData)
+            : imageData,
+        })
       }
     }
   }
@@ -84,15 +99,18 @@ const App = () => {
   }
 
   return (
-    <div>
+    <div
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+    >
       <MainTools
         value={activeTool}
         onChange={tool => {
           setTool(tool)
         }}
       />
-      <canvas width="500" height="500" ref={canvasRef} />
-      <Canvas ref={canvasRef2} layers={layers} width="500" height="500" />
+      <Canvas ref={canvasRef} layers={layers} width="500" height="500" />
       <div className="right-panels">
         <Panel
           title="Layers"
