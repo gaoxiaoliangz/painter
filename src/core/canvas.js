@@ -1,39 +1,76 @@
-const defaultCanvasConfig = {
-  width: 500,
-  height: 500,
+export class ImageFragment {
+  constructor(imageData) {
+    this.imageData = imageData
+    this.x = 0
+    this.y = 0
+  }
 }
 
-const createCanvas = (config = {}) => {
+export class Shape {
+  constructor(type) {
+    this.type = type
+    this.x = 0
+    this.y = 0
+  }
+}
+
+export const createImageFragment = (imageData, meta) => {
+  const defaultMeta = {
+    x: 0,
+    y: 0,
+  }
+  const imgFrag = new ImageFragment(imageData)
+  Object.assign(imgFrag, {
+    ...defaultMeta,
+    ...meta,
+  })
+  return imgFrag
+}
+
+export const createShape = (type, meta) => {
+  const defaultMeta = {
+    x: 0,
+    y: 0,
+  }
+  const shape = new Shape(type)
+  Object.assign(shape, {
+    ...defaultMeta,
+    ...meta,
+  })
+  return shape
+}
+
+const createCanvas = config => {
   const newCanvas = document.createElement('canvas')
-  newCanvas.width = config.width || defaultCanvasConfig.width
-  newCanvas.height = config.height || defaultCanvasConfig.height
   document.body.appendChild(newCanvas)
   newCanvas.setAttribute('class', config.class)
-  newCanvas.setAttribute('style', 'position: fixed; top: -999em;')
+  // newCanvas.setAttribute('style', 'position: fixed; top: -999em;')
   return newCanvas
 }
 
 const offscreenCanvases = {
-  objectToImageData: createCanvas({ class: 'objectToImageData' }),
-  imageDataToDataURL: createCanvas({ class: 'imageDataToDataURL' }),
-  mergeImageData: createCanvas({ class: 'mergeImageData' }),
-  bufferCanvas: createCanvas({ class: 'bufferCanvas' }),
+  shapeToImageFragment: createCanvas({ class: 'shapeToImageFragment' }),
+  mergeImageFragments: createCanvas({ class: 'mergeImageFragments' }),
+  getCanvasWithImageData: createCanvas({ class: 'getCanvasWithImageData' }),
+  // imageDataToDataURL: createCanvas({ class: 'imageDataToDataURL' }),
 }
 
 /**
  * object
  * type: rect, x, y, width, height, color, stroke, radius?
  */
-export const objectToImageData = ({ type, ...rest }, canvasConfig) => {
-  const canvas = offscreenCanvases.objectToImageData
+export const shapeToImageFragment = ({ type, x, y, ...rest }) => {
+  const canvas = offscreenCanvases.shapeToImageFragment
   const ctx = canvas.getContext('2d')
   ctx.save()
 
   switch (type) {
     case 'rect': {
-      const { x, y, width, height, color /*stroke*/ } = rest
+      const { width, height, color /*stroke*/ } = rest
+      canvas.width = width
+      canvas.height = height
       ctx.fillStyle = color
-      ctx.fillRect(x, y, width, height)
+      ctx.fillRect(0, 0, width, height)
       break
     }
 
@@ -41,38 +78,85 @@ export const objectToImageData = ({ type, ...rest }, canvasConfig) => {
       throw new Error(`Unknown type ${type}`)
   }
   ctx.restore()
+  if (canvas.width === 0 || canvas.height === 0) {
+    return null
+  }
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-  return imageData
+  return createImageFragment(imageData, { x, y })
 }
 
-export const imageDataToDataURL = imageData => {
-  const canvas = offscreenCanvases.imageDataToDataURL
-  const ctx = canvas.getContext('2d')
-  ctx.putImageData(imageData, 0, 0)
-  return canvas.toDataURL('image/png')
-}
+// export const imageDataToDataURL = imageData => {
+//   const canvas = offscreenCanvases.imageDataToDataURL
+//   const ctx = canvas.getContext('2d')
+//   ctx.putImageData(imageData, 0, 0)
+//   return canvas.toDataURL('image/png')
+// }
 
 const getCanvasWithImageData = imageData => {
-  const canvas = offscreenCanvases.bufferCanvas
+  const canvas = offscreenCanvases.getCanvasWithImageData
   const ctx = canvas.getContext('2d')
+  canvas.width = imageData.width
+  canvas.height = imageData.height
   ctx.putImageData(imageData, 0, 0)
   return canvas
 }
 
-export const mergeImageData = imageDataArr => {
-  console.time(`merging ${imageDataArr.length}`)
-  const canvas = offscreenCanvases.mergeImageData
+export const mergeImageFragments = imageFragments => {
+  console.time(`merging imageFragments ${imageFragments.length}`)
+  let isFirst = true
+  let origin = [0, 0]
+  let lastOrigin = [0, 0]
+  const canvas = offscreenCanvases.mergeImageFragments
   const ctx = canvas.getContext('2d')
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-  imageDataArr.forEach(obj => {
-    if (!obj || !obj.imageData) {
+  imageFragments.forEach(imgFrag => {
+    if (!imgFrag || !imgFrag.imageData) {
       return
     }
-    const { imageData, offset } = obj
-    ctx.drawImage(getCanvasWithImageData(imageData), ...(offset || [0, 0]))
+    const { imageData, x, y } = imgFrag
+    // calculate width, height & new origin
+    let width
+    let height
+    if (isFirst) {
+      width = imageData.width
+      height = imageData.height
+      isFirst = false
+    } else {
+      width =
+        Math.max(canvas.width - origin[0], x + imageData.width) -
+        Math.max(-origin[0], x)
+      height =
+        Math.max(canvas.height - origin[1], x + imageData.height) -
+        Math.max(-origin[1], y)
+      if (x < -origin[0]) {
+        lastOrigin[0] = origin[0]
+        origin[0] = -x
+      }
+      if (y < -origin[1]) {
+        lastOrigin[1] = origin[1]
+        origin[1] = -y
+      }
+    }
+
+    // resize
+    const prevImgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    canvas.width = width
+    canvas.height = height
+    ctx.putImageData(
+      prevImgData,
+      lastOrigin[0] === origin[0] ? 0 : origin[0] - lastOrigin[0],
+      lastOrigin[1] === origin[1] ? 0 : origin[1] - lastOrigin[1],
+    )
+    ctx.translate(...origin)
+
+    // draw
+    ctx.drawImage(getCanvasWithImageData(imageData), x, y)
   })
-  console.timeEnd(`merging ${imageDataArr.length}`)
+  console.timeEnd(`merging imageFragments ${imageFragments.length}`)
   const result = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  return result
+  return createImageFragment(result, {
+    x: -origin[0],
+    y: -origin[1],
+  })
 }

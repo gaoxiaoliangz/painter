@@ -6,7 +6,11 @@ import Layer from './components/Layer/Layer'
 import userImmerState from './hooks/useImmerState'
 import './App.scoped.scss'
 import Canvas from './components/Canvas/Canvas'
-import { objectToImageData, mergeImageData } from './core/canvas'
+import {
+  createShape,
+  mergeImageFragments,
+  shapeToImageFragment,
+} from './core/canvas'
 import ColorPicker from './components/ColorPicker/ColorPicker'
 
 const App = () => {
@@ -22,8 +26,7 @@ const App = () => {
       visible: true,
       selected: false,
       shapes: [],
-      imageData: null,
-      offset: [0, 0],
+      imageFragment: null,
       ...initialState,
     }
   }
@@ -69,12 +72,13 @@ const App = () => {
   const handleMouseDown = e => {
     if (activeLayer) {
       self.isDown = true
-      const img = activeLayer.imageData
+      const { imageFragment } = activeLayer
       self.startDot = {
         x: e.pageX,
         y: e.pageY,
+        offset: activeLayer.offset,
       }
-      self.lastImg = img
+      self.lastImageFragment = imageFragment
     }
   }
 
@@ -83,28 +87,32 @@ const App = () => {
       switch (activeTool) {
         case 'rect':
           {
-            const imageData = objectToImageData({
-              type: 'rect',
-              x: self.startDot.x,
-              y: self.startDot.y,
-              width: e.pageX - self.startDot.x,
-              height: e.pageY - self.startDot.y,
-              color,
-            })
+            const imageFragment = shapeToImageFragment(
+              createShape('rect', {
+                x: self.startDot.x,
+                y: self.startDot.y,
+                width: e.pageX - self.startDot.x,
+                height: e.pageY - self.startDot.y,
+                color,
+              }),
+            )
             updateLayer({
               id: activeLayer.id,
-              imageData: self.lastImg
-                ? mergeImageData([{ imageData: self.lastImg }, { imageData }])
-                : imageData,
+              imageFragment: self.lastImageFragment
+                ? mergeImageFragments([self.lastImageFragment, imageFragment])
+                : imageFragment,
             })
           }
           break
 
         case 'move':
-          updateLayer({
-            id: activeLayer.id,
-            offset: [e.pageX - self.startDot.x, e.pageY - self.startDot.y],
-          })
+          // @todo
+          // const oX = self.startDot.offset[0] + e.pageX - self.startDot.x
+          // const oY = self.startDot.offset[1] + e.pageY - self.startDot.y
+          // updateLayer({
+          //   id: activeLayer.id,
+          //   offset: [oX, oY],
+          // })
           break
 
         default:
@@ -145,7 +153,7 @@ const App = () => {
                           ...layer,
                           selected: idx === 0,
                         }
-                      })
+                      }),
                     )
                   }}
                 />

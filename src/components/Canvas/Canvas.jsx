@@ -1,25 +1,20 @@
 import React, { useEffect, useRef, useImperativeMethods } from 'react'
 import pt from 'prop-types'
-import { mergeImageData, objectToImageData } from '../../core/canvas'
+import { mergeImageFragments, shapeToImageFragment } from '../../core/canvas'
 import { reverse } from '../../utils'
 
-const shapesToImageData = shapes => {
+const shapesToImageFragment = shapes => {
   if (!shapes || shapes.length === 0) {
     return null
   }
-  return mergeImageData(
-    shapes.map(objectToImageData).map(imageData => ({ imageData }))
-  )
+  return mergeImageFragments(shapes.map(shapeToImageFragment))
 }
 
-const layerToImageData = ({ shapes, imageData, offset }) => {
-  if (imageData) {
-    return mergeImageData([
-      { imageData },
-      { imageData: shapesToImageData(shapes) },
-    ])
+const layerToImageFragment = ({ shapes, imageFragment }) => {
+  if (imageFragment) {
+    return mergeImageFragments([imageFragment, shapesToImageFragment(shapes)])
   }
-  return shapesToImageData(shapes)
+  return shapesToImageFragment(shapes)
 }
 
 const Canvas = React.forwardRef(({ layers, ...rest }, ref) => {
@@ -43,19 +38,15 @@ const Canvas = React.forwardRef(({ layers, ...rest }, ref) => {
       self.ctx = canvasRef.current.getContext('2d')
       ctx = self.ctx
     }
-    const imageData = mergeImageData(
-      reverse(
-        layers
-          .filter(layer => layer.visible)
-          .map(layer => ({
-            imageData: layerToImageData(layer.imageData),
-            offset: layer.offset,
-          }))
-          .filter(obj => (obj.imageData))
-      )
+    const imageFragment = mergeImageFragments(
+      reverse(layers.filter(layer => layer.visible).map(layerToImageFragment)),
     )
-    if (imageData) {
-      ctx.putImageData(imageData, 0, 0)
+    if (imageFragment) {
+      ctx.putImageData(
+        imageFragment.imageData,
+        imageFragment.x,
+        imageFragment.y,
+      )
     } else {
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
     }
