@@ -104,10 +104,12 @@ const getCanvasWithImageData = imageData => {
 
 export const mergeImageFragments = imageFragments => {
   console.time(`merging imageFragments ${imageFragments.length}`)
-  let isFirst = true
+  // let isFirst = true
   let origin = [0, 0]
   let lastOrigin = [0, 0]
   const canvas = offscreenCanvases.mergeImageFragments
+  canvas.width = 1
+  canvas.height = 1
   const ctx = canvas.getContext('2d')
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   imageFragments.forEach(imgFrag => {
@@ -118,28 +120,30 @@ export const mergeImageFragments = imageFragments => {
     // calculate width, height & new origin
     let width
     let height
-    if (isFirst) {
-      width = imageData.width
-      height = imageData.height
-      isFirst = false
-    } else {
-      width =
-        Math.max(canvas.width - origin[0], x + imageData.width) -
-        Math.max(-origin[0], x)
-      height =
-        Math.max(canvas.height - origin[1], x + imageData.height) -
-        Math.max(-origin[1], y)
-      if (x < -origin[0]) {
-        lastOrigin[0] = origin[0]
-        origin[0] = -x
-      }
-      if (y < -origin[1]) {
-        lastOrigin[1] = origin[1]
-        origin[1] = -y
-      }
+    // if (isFirst) {
+    //   width = imageData.width
+    //   height = imageData.height
+    //   isFirst = false
+    // } else {
+    width =
+      Math.max(canvas.width - origin[0], x + imageData.width) -
+      Math.min(-origin[0], x)
+    height =
+      Math.max(canvas.height - origin[1], y + imageData.height) -
+      Math.min(-origin[1], y)
+    if (x < -origin[0]) {
+      lastOrigin[0] = origin[0]
+      origin[0] = -x
     }
+    if (y < -origin[1]) {
+      lastOrigin[1] = origin[1]
+      origin[1] = -y
+    }
+    // }
+    console.log(width, height)
 
     // resize
+    ctx.translate(0, 0)
     const prevImgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
     canvas.width = width
     canvas.height = height
@@ -149,6 +153,7 @@ export const mergeImageFragments = imageFragments => {
       lastOrigin[1] === origin[1] ? 0 : origin[1] - lastOrigin[1],
     )
     ctx.translate(...origin)
+    console.log(origin, x, y)
 
     // draw
     ctx.drawImage(getCanvasWithImageData(imageData), x, y)
