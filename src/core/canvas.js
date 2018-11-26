@@ -32,11 +32,18 @@ export const createShape = (type, meta) => {
     x: 0,
     y: 0,
   }
+  const { width, height, x, y } = meta
   const shape = new Shape(type)
   Object.assign(shape, {
     ...defaultMeta,
     ...meta,
   })
+  if (width < 0) {
+    shape.x = x + width
+  }
+  if (height < 0) {
+    shape.y = y + height
+  }
   return shape
 }
 
@@ -44,7 +51,7 @@ const createCanvas = config => {
   const newCanvas = document.createElement('canvas')
   document.body.appendChild(newCanvas)
   newCanvas.setAttribute('class', config.class)
-  // newCanvas.setAttribute('style', 'position: fixed; top: -999em;')
+  newCanvas.setAttribute('style', 'position: fixed; top: -999em;')
   return newCanvas
 }
 
@@ -52,7 +59,7 @@ const offscreenCanvases = {
   shapeToImageFragment: createCanvas({ class: 'shapeToImageFragment' }),
   mergeImageFragments: createCanvas({ class: 'mergeImageFragments' }),
   getCanvasWithImageData: createCanvas({ class: 'getCanvasWithImageData' }),
-  // imageDataToDataURL: createCanvas({ class: 'imageDataToDataURL' }),
+  imageDataToDataURL: createCanvas({ class: 'imageDataToDataURL' }),
 }
 
 /**
@@ -67,10 +74,11 @@ export const shapeToImageFragment = ({ type, x, y, ...rest }) => {
   switch (type) {
     case 'rect': {
       const { width, height, color /*stroke*/ } = rest
-      canvas.width = width
-      canvas.height = height
+      canvas.width = Math.abs(width)
+      canvas.height = Math.abs(height)
       ctx.fillStyle = color
-      ctx.fillRect(0, 0, width, height)
+      // @todo: 会不会有问题？
+      ctx.fillRect(0, 0, Math.abs(width), Math.abs(height))
       break
     }
 
@@ -86,12 +94,12 @@ export const shapeToImageFragment = ({ type, x, y, ...rest }) => {
   return createImageFragment(imageData, { x, y })
 }
 
-// export const imageDataToDataURL = imageData => {
-//   const canvas = offscreenCanvases.imageDataToDataURL
-//   const ctx = canvas.getContext('2d')
-//   ctx.putImageData(imageData, 0, 0)
-//   return canvas.toDataURL('image/png')
-// }
+export const imageDataToDataURL = imageData => {
+  const canvas = offscreenCanvases.imageDataToDataURL
+  const ctx = canvas.getContext('2d')
+  ctx.putImageData(imageData, 0, 0)
+  return canvas.toDataURL('image/png')
+}
 
 const getCanvasWithImageData = imageData => {
   const canvas = offscreenCanvases.getCanvasWithImageData

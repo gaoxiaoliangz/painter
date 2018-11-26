@@ -94,7 +94,7 @@ const App = () => {
                 width: e.pageX - self.startDot.x,
                 height: e.pageY - self.startDot.y,
                 color,
-              }),
+              })
             )
             updateLayer({
               id: activeLayer.id,
@@ -106,13 +106,15 @@ const App = () => {
           break
 
         case 'move':
-          // @todo
-          // const oX = self.startDot.offset[0] + e.pageX - self.startDot.x
-          // const oY = self.startDot.offset[1] + e.pageY - self.startDot.y
-          // updateLayer({
-          //   id: activeLayer.id,
-          //   offset: [oX, oY],
-          // })
+          // @todo: shapes
+          updateLayer({
+            id: activeLayer.id,
+            imageFragment: {
+              ...self.lastImageFragment,
+              x: self.lastImageFragment.x + e.pageX - self.startDot.x,
+              y: self.lastImageFragment.y + e.pageY - self.startDot.y,
+            },
+          })
           break
 
         default:
@@ -153,7 +155,7 @@ const App = () => {
                           ...layer,
                           selected: idx === 0,
                         }
-                      }),
+                      })
                     )
                   }}
                 />

@@ -11,29 +11,37 @@ const Test = props => {
   useEffect(() => {
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    const shape = createShape('rect', {
-      x: -20,
-      y: 0,
-      width: 50,
-      height: 50,
-      color: 'red',
-    })
-    const shape2 = createShape('rect', {
-      x: 50,
-      y: 0,
-      width: 50,
-      height: 50,
-      color: 'green',
-    })
-    const imageFrag = shapeToImageFragment(shape)
-    const imageFrag2 = shapeToImageFragment(shape2)
-    const merged = mergeImageFragments([imageFrag, imageFrag2])
+
+    const shapes = [
+      createShape('rect', {
+        x: -20,
+        y: 0,
+        width: 50,
+        height: 50,
+        color: 'red',
+      }),
+      createShape('rect', {
+        x: 50,
+        y: 0,
+        width: 50,
+        height: 50,
+        color: 'green',
+      }),
+      createShape('rect', {
+        x: 150,
+        y: 0,
+        width: -50,
+        height: 50,
+        color: 'blue',
+      }),
+    ]
+    const frags = shapes.map(shapeToImageFragment)
+    const merged = mergeImageFragments(frags)
 
     const putFrag = frag => {
       ctx.putImageData(frag.imageData, frag.x, frag.y)
     }
-    // putFrag(mergeImageFragments([imageFrag]))
-    // putFrag(imageFrag)
+
     putFrag(merged)
   }, [])
 

@@ -19,7 +19,8 @@ const layerToImageFragment = ({ shapes, imageFragment }) => {
 
 const Canvas = React.forwardRef(({ layers, ...rest }, ref) => {
   const canvasRef = useRef(null)
-  const { current: self } = useRef({})
+  // const { current: self } = useRef({})
+  const { current: canvas } = canvasRef
 
   useEffect(() => {
     renderLayers()
@@ -28,27 +29,28 @@ const Canvas = React.forwardRef(({ layers, ...rest }, ref) => {
   useImperativeMethods(ref, () => {
     return {
       renderLayers,
+      // 不能直接写 canvas?
       canvas: canvasRef.current,
     }
   })
 
   const renderLayers = () => {
-    let { ctx } = self
-    if (!ctx) {
-      self.ctx = canvasRef.current.getContext('2d')
-      ctx = self.ctx
+    if (!canvas) {
+      return
     }
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
     const imageFragment = mergeImageFragments(
-      reverse(layers.filter(layer => layer.visible).map(layerToImageFragment)),
+      reverse(layers.filter(layer => layer.visible).map(layerToImageFragment))
     )
     if (imageFragment) {
       ctx.putImageData(
         imageFragment.imageData,
         imageFragment.x,
-        imageFragment.y,
+        imageFragment.y
       )
     } else {
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
     }
   }
 
