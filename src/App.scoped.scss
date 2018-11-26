@@ -17,4 +17,12 @@ canvas {
   right: 0;
   top: 0;
   bottom: 0;
+  z-index: 150;
+}
+
+.info-panel {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  height: 50px;
 }

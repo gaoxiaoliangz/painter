@@ -49,12 +49,13 @@ const createCanvas = config => {
     canvasesWrap = document.createElement('div')
     canvasesWrap.id = 'canvases-wrap'
     canvasesWrap.style = `
-      // position: fixed;
-      // left: 0;
-      // top: 0;
-      // height: 100%;
-      // overflow: auto;
-      margin-top: 500px;
+      position: fixed;
+      left: 0;
+      top: -999em;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+      // margin-top: 500px;
     `
     document.body.appendChild(canvasesWrap)
   }

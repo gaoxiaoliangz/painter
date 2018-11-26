@@ -1,10 +1,11 @@
 import React from 'react'
 import pt from 'prop-types'
 import './Panel.scoped.scss'
+import classNames from 'classnames'
 
-const Panel = ({ renderFooter, title, children }) => {
+const Panel = ({ renderFooter, title, children, ...rest }) => {
   return (
-    <div className="panel">
+    <div {...rest} className={classNames(['panel', rest.className])}>
       <h3 className="panel-title">{title}</h3>
       <div className="panel-content">{children}</div>
       {renderFooter && <div className="panel-footer">{renderFooter()}</div>}

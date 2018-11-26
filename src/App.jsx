@@ -13,6 +13,7 @@ import {
 } from './core/canvas'
 import ColorPicker from './components/ColorPicker/ColorPicker'
 import { calcDistance } from './utils'
+import QuickFuncs from './components/QuickFuncs/QuickFuncs'
 
 const App = () => {
   const createLayer = initialState => {
@@ -36,8 +37,9 @@ const App = () => {
   const { current: self } = useRef({})
   const [activeTool, setTool] = useState('cycle')
   const [color, setColor] = useState('#000000')
+  const [zoom, setZoom] = useState(1)
   const [layers, updateLayers] = userImmerState([])
-  const [canvasOffset, updateCanvasOffset] = useState([0, 0])
+  const [canvasOffset, updateCanvasOffset] = useState([100, 50])
   const selectedLayers = layers.filter(l => l.selected)
   const activeLayer = selectedLayers.length === 1 ? selectedLayers[0] : null
 
@@ -180,12 +182,36 @@ const App = () => {
         style={{
           left: canvasOffset[0],
           top: canvasOffset[1],
+          transform: `scale(${zoom})`,
+          transition: `0.1s all`,
         }}
         ref={canvasRef}
         layers={layers}
-        width="500"
-        height="500"
+        width="800"
+        height="600"
       />
+      <QuickFuncs
+        onTrigger={tool => {
+          switch (tool) {
+            case 'zoom-in':
+              setZoom(zoom + 0.2)
+              break
+
+            case 'zoom-out':
+              const newZoom = zoom - 0.2
+              if (newZoom > 0.01) {
+                setZoom(newZoom)
+              }
+              break
+
+            default:
+              throw new Error(`Unknown tool ${tool}`)
+          }
+        }}
+      />
+      <Panel className="info-panel" title="Info">
+        zoom: {(zoom * 100).toFixed(2)}
+      </Panel>
       <div className="right-panels">
         <Panel
           title="Layers"
