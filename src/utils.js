@@ -12,3 +12,7 @@ export const fallback = (chain, finalFallback) => {
   }
   return [finalFallback, -1]
 }
+
+export const calcDistance = (dot1, dot2) => {
+  return Math.round(((dot1.x - dot2.x) ** 2 + (dot1.y - dot2.y) ** 2) ** 0.5)
+}

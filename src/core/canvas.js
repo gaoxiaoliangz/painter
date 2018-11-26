@@ -14,6 +14,7 @@ export class Shape {
   }
 }
 
+// imageFragment 的 x, y 是其左上角的坐标
 export const createImageFragment = (imageData, meta) => {
   const defaultMeta = {
     x: 0,
@@ -27,32 +28,35 @@ export const createImageFragment = (imageData, meta) => {
   return imgFrag
 }
 
+// shape 的 x, y 会根据 type 的不同而不同，
+// rect 是左上角，cycle 是圆心坐标
 export const createShape = (type, meta) => {
   const defaultMeta = {
     x: 0,
     y: 0,
   }
-  const { width, height, x, y } = meta
   const shape = new Shape(type)
   Object.assign(shape, {
     ...defaultMeta,
     ...meta,
   })
-  if (width < 0) {
-    shape.x = x + width
-  }
-  if (height < 0) {
-    shape.y = y + height
-  }
   return shape
 }
 
 const createCanvas = config => {
-  const newCanvas = document.createElement('canvas')
-  document.body.appendChild(newCanvas)
-  newCanvas.setAttribute('class', config.class)
-  newCanvas.setAttribute('style', 'position: fixed; top: -999em;')
-  return newCanvas
+  const canvas = document.createElement('canvas')
+  const title = document.createElement('p')
+  canvas.width = 1
+  canvas.height = 1
+  title.textContent = config.class
+  const wrap = document.createElement('div')
+  wrap.appendChild(title)
+  wrap.appendChild(canvas)
+  document.body.appendChild(wrap)
+  canvas.setAttribute('class', config.class)
+  // newCanvas.setAttribute('style', 'position: fixed; top: -999em; background: gray')
+  canvas.setAttribute('style', 'background: gray')
+  return canvas
 }
 
 const offscreenCanvases = {
@@ -64,11 +68,16 @@ const offscreenCanvases = {
 
 /**
  * object
- * type: rect, x, y, width, height, color, stroke, radius?
+ * types
+ * rect: x, y, width, height, color, stroke?, radius?
+ * cycle: x, y, r, color
+ * fragment 的 x, y 永远都是左上角的坐标
  */
 export const shapeToImageFragment = ({ type, x, y, ...rest }) => {
   const canvas = offscreenCanvases.shapeToImageFragment
   const ctx = canvas.getContext('2d')
+  let fragX = x
+  let fragY = y
   ctx.save()
 
   switch (type) {
@@ -77,21 +86,40 @@ export const shapeToImageFragment = ({ type, x, y, ...rest }) => {
       canvas.width = Math.abs(width)
       canvas.height = Math.abs(height)
       ctx.fillStyle = color
+      if (width < 0) {
+        fragX = x + width
+      }
+      if (height < 0) {
+        fragY = y + height
+      }
       // @todo: 会不会有问题？
       ctx.fillRect(0, 0, Math.abs(width), Math.abs(height))
+      break
+    }
+
+    case 'cycle': {
+      const { r, color } = rest
+      canvas.width = 2 * r
+      canvas.height = 2 * r
+      ctx.beginPath()
+      ctx.fillStyle = color
+      ctx.arc(r, r, r, 0, Math.PI * 2)
+      ctx.fill()
+      fragX = x - r
+      fragY = y - r
       break
     }
 
     default:
       throw new Error(`Unknown type ${type}`)
   }
+
   ctx.restore()
   if (canvas.width === 0 || canvas.height === 0) {
     return null
   }
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
-  return createImageFragment(imageData, { x, y })
+  return createImageFragment(imageData, { x: fragX, y: fragY })
 }
 
 export const imageDataToDataURL = imageData => {
@@ -111,7 +139,7 @@ const getCanvasWithImageData = imageData => {
 }
 
 export const mergeImageFragments = imageFragments => {
-  console.time(`merging imageFragments ${imageFragments.length}`)
+  const startT = new Date().valueOf()
   const origin = [0, 0]
   const lastOrigin = [0, 0]
   const canvas = offscreenCanvases.mergeImageFragments
@@ -159,7 +187,12 @@ export const mergeImageFragments = imageFragments => {
     // draw
     ctx.drawImage(getCanvasWithImageData(imageData), x, y)
   })
-  console.timeEnd(`merging imageFragments ${imageFragments.length}`)
+  const span = new Date().valueOf() - startT
+  if (span > 50) {
+    console.warn(
+      `merging imageFragments ${imageFragments.length} takes ${span}ms`
+    )
+  }
   const result = ctx.getImageData(0, 0, canvas.width, canvas.height)
   return createImageFragment(result, {
     x: -origin[0],

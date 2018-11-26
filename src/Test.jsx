@@ -13,26 +13,32 @@ const Test = props => {
     const ctx = canvas.getContext('2d')
 
     const shapes = [
-      createShape('rect', {
-        x: -20,
+      // createShape('rect', {
+      //   x: -20,
+      //   y: 0,
+      //   width: 50,
+      //   height: 50,
+      //   color: 'red',
+      // }),
+      // createShape('rect', {
+      //   x: 50,
+      //   y: 0,
+      //   width: 50,
+      //   height: 50,
+      //   color: 'green',
+      // }),
+      // createShape('rect', {
+      //   x: 150,
+      //   y: 0,
+      //   width: -50,
+      //   height: 50,
+      //   color: 'blue',
+      // }),
+      createShape('cycle', {
+        x: 0,
         y: 0,
-        width: 50,
-        height: 50,
-        color: 'red',
-      }),
-      createShape('rect', {
-        x: 50,
-        y: 0,
-        width: 50,
-        height: 50,
-        color: 'green',
-      }),
-      createShape('rect', {
-        x: 150,
-        y: 0,
-        width: -50,
-        height: 50,
-        color: 'blue',
+        r: 50,
+        color: 'yellow',
       }),
     ]
     const frags = shapes.map(shapeToImageFragment)

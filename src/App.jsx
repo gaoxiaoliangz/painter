@@ -12,6 +12,7 @@ import {
   shapeToImageFragment,
 } from './core/canvas'
 import ColorPicker from './components/ColorPicker/ColorPicker'
+import { calcDistance } from './utils'
 
 const App = () => {
   const createLayer = initialState => {
@@ -33,7 +34,7 @@ const App = () => {
 
   const canvasRef = useRef(null)
   const { current: self } = useRef({})
-  const [activeTool, setTool] = useState('rect')
+  const [activeTool, setTool] = useState('cycle')
   const [color, setColor] = useState('#000000')
   const [layers, updateLayers] = userImmerState([])
   const selectedLayers = layers.filter(l => l.selected)
@@ -76,7 +77,6 @@ const App = () => {
       self.startDot = {
         x: e.pageX,
         y: e.pageY,
-        offset: activeLayer.offset,
       }
       self.lastImageFragment = imageFragment
     }
@@ -85,25 +85,46 @@ const App = () => {
   const handleMouseMove = e => {
     if (self.isDown) {
       switch (activeTool) {
-        case 'rect':
-          {
-            const imageFragment = shapeToImageFragment(
-              createShape('rect', {
-                x: self.startDot.x,
-                y: self.startDot.y,
-                width: e.pageX - self.startDot.x,
-                height: e.pageY - self.startDot.y,
-                color,
-              })
-            )
-            updateLayer({
-              id: activeLayer.id,
-              imageFragment: self.lastImageFragment
-                ? mergeImageFragments([self.lastImageFragment, imageFragment])
-                : imageFragment,
+        case 'rect': {
+          const imageFragment = shapeToImageFragment(
+            createShape('rect', {
+              x: self.startDot.x,
+              y: self.startDot.y,
+              width: e.pageX - self.startDot.x,
+              height: e.pageY - self.startDot.y,
+              color,
             })
-          }
+          )
+          updateLayer({
+            id: activeLayer.id,
+            imageFragment: self.lastImageFragment
+              ? mergeImageFragments([self.lastImageFragment, imageFragment])
+              : imageFragment,
+          })
           break
+        }
+
+        case 'cycle': {
+          const r = calcDistance(self.startDot, {
+            x: e.pageX,
+            y: e.pageY,
+          })
+          const imageFragment = shapeToImageFragment(
+            createShape('cycle', {
+              x: self.startDot.x,
+              y: self.startDot.y,
+              r,
+              color,
+            })
+          )
+          updateLayer({
+            id: activeLayer.id,
+            imageFragment: self.lastImageFragment
+              ? mergeImageFragments([self.lastImageFragment, imageFragment])
+              : imageFragment,
+          })
+          break
+        }
 
         case 'move':
           // @todo: shapes
