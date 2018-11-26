@@ -3,7 +3,7 @@ import pt from 'prop-types'
 import Toolbox from '../Toolbox/Toolbox'
 import './MainTools.scoped.scss'
 
-const tools = ['move', 'rect', 'cycle', 'pan']
+const tools = ['move', 'rect', 'cycle', 'pencil', 'pan']
 
 const MainTools = props => {
   return (

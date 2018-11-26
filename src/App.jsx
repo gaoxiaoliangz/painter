@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
+import _ from 'lodash'
 import MainTools from './components/MainTools/MainTools'
 import Panel from './components/Panel/Panel'
 import PanelButton from './components/PanelButton/PanelButton'
@@ -14,6 +15,22 @@ import {
 import ColorPicker from './components/ColorPicker/ColorPicker'
 import { calcDistance } from './utils'
 import QuickFuncs from './components/QuickFuncs/QuickFuncs'
+
+const interpolateDots = (dot1, dot2, span = 3) => {
+  const dist = calcDistance(dot1, dot2)
+  const count = Math.round(dist / span)
+  const distX = dot2.x - dot1.x
+  const stepX = distX / count
+  const distY = dot2.y - dot1.y
+  const stepY = distY / count
+  const result = _.times(count, n => {
+    return {
+      x: dot1.x + n * stepX,
+      y: dot1.y + n * stepY,
+    }
+  })
+  return result
+}
 
 const App = () => {
   const createLayer = initialState => {
@@ -35,7 +52,7 @@ const App = () => {
 
   const canvasRef = useRef(null)
   const { current: self } = useRef({})
-  const [activeTool, setTool] = useState('cycle')
+  const [activeTool, setTool] = useState('pencil')
   const [color, setColor] = useState('#000000')
   const [zoom, setZoom] = useState(1)
   const [layers, updateLayers] = userImmerState([])
@@ -83,6 +100,7 @@ const App = () => {
       }
       self.lastImageFragment = imageFragment
       self.lastCanvasOffset = canvasOffset
+      self.pencilPath = []
     }
   }
 
@@ -129,6 +147,39 @@ const App = () => {
             id: activeLayer.id,
             imageFragment: self.lastImageFragment
               ? mergeImageFragments([self.lastImageFragment, imageFragment])
+              : imageFragment,
+          })
+          break
+        }
+
+        case 'pencil': {
+          self.pencilPath.push({
+            x: e.pageX - canvasOffset[0],
+            y: e.pageY - canvasOffset[1],
+            t: new Date().valueOf(),
+          })
+          if (self.pencilPath.length === 1) {
+            return
+          }
+          const dots = interpolateDots(
+            self.pencilPath[self.pencilPath.length - 1],
+            self.pencilPath[self.pencilPath.length - 2]
+          )
+          const imageFragment = mergeImageFragments(
+            dots.map(dot => {
+              const circle = createShape('cycle', {
+                x: dot.x,
+                y: dot.y,
+                r: 3,
+                color,
+              })
+              return shapeToImageFragment(circle)
+            })
+          )
+          updateLayer({
+            id: activeLayer.id,
+            imageFragment: activeLayer.imageFragment
+              ? mergeImageFragments([activeLayer.imageFragment, imageFragment])
               : imageFragment,
           })
           break
