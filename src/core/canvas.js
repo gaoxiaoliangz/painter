@@ -1,3 +1,5 @@
+// import _ from 'lodash'
+
 export class ImageFragment {
   constructor(imageData) {
     this.imageData = imageData
@@ -153,15 +155,96 @@ const getCanvasWithImageData = imageData => {
   return canvas
 }
 
+// export const mergeImageFragments = imageFragments => {
+//   const startT = new Date().valueOf()
+//   const origin = [0, 0]
+//   const lastOrigin = [0, 0]
+//   const canvas = offscreenCanvases.mergeImageFragments
+//   canvas.width = 1
+//   canvas.height = 1
+//   const ctx = canvas.getContext('2d')
+//   ctx.clearRect(0, 0, canvas.width, canvas.height)
+//   imageFragments.forEach(imgFrag => {
+//     if (!imgFrag || !imgFrag.imageData) {
+//       return
+//     }
+//     const { imageData, x, y } = imgFrag
+
+//     // calculate width, height & new origin
+//     console.time('calculate width, height & new origin')
+//     const width =
+//       Math.max(canvas.width - origin[0], x + imageData.width) -
+//       Math.min(-origin[0], x)
+//     const height =
+//       Math.max(canvas.height - origin[1], y + imageData.height) -
+//       Math.min(-origin[1], y)
+//     if (x < -origin[0]) {
+//       lastOrigin[0] = origin[0]
+//       origin[0] = -x
+//     } else {
+//       lastOrigin[0] = origin[0]
+//     }
+//     if (y < -origin[1]) {
+//       lastOrigin[1] = origin[1]
+//       origin[1] = -y
+//     } else {
+//       lastOrigin[1] = origin[1]
+//     }
+//     console.timeEnd('calculate width, height & new origin')
+
+//     // resize
+//     console.time('resize')
+//     console.time('getImageData')
+//     const prevImgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+//     console.timeEnd('getImageData')
+//     console.time('canvas mutation')
+//     canvas.width = width
+//     canvas.height = height
+//     console.timeEnd('canvas mutation')
+//     console.time('putImageData')
+//     ctx.putImageData(
+//       prevImgData,
+//       lastOrigin[0] === origin[0] ? 0 : origin[0] - lastOrigin[0],
+//       lastOrigin[1] === origin[1] ? 0 : origin[1] - lastOrigin[1]
+//     )
+//     console.timeEnd('putImageData')
+//     ctx.translate(...origin)
+//     console.timeEnd('resize')
+
+//     // draw
+//     console.time('draw')
+//     ctx.drawImage(getCanvasWithImageData(imageData), x, y)
+//     console.timeEnd('draw')
+//   })
+//   const span = new Date().valueOf() - startT
+//   if (span > 50) {
+//     console.warn(
+//       `merging imageFragments ${imageFragments.length} takes ${span}ms`
+//     )
+//   }
+//   const result = ctx.getImageData(0, 0, canvas.width, canvas.height)
+//   return createImageFragment(result, {
+//     x: -origin[0],
+//     y: -origin[1],
+//   })
+// }
+
 export const mergeImageFragments = imageFragments => {
   const startT = new Date().valueOf()
-  const origin = [0, 0]
-  const lastOrigin = [0, 0]
+  const padding = { top: 50, right: 50, bottom: 50, left: 50 }
+  const initialWidth = 500
+  const initialHeight = 500
+  const boundary = {
+    width: 1,
+    height: 1,
+    loc: null,
+  }
   const canvas = offscreenCanvases.mergeImageFragments
-  canvas.width = 1
-  canvas.height = 1
+  canvas.width = initialWidth + padding.left + padding.right
+  canvas.height = initialHeight + padding.top + padding.bottom
   const ctx = canvas.getContext('2d')
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.translate(padding.left, padding.top)
+
   imageFragments.forEach(imgFrag => {
     if (!imgFrag || !imgFrag.imageData) {
       return
@@ -169,38 +252,52 @@ export const mergeImageFragments = imageFragments => {
     const { imageData, x, y } = imgFrag
 
     // calculate width, height & new origin
-    const width =
-      Math.max(canvas.width - origin[0], x + imageData.width) -
-      Math.min(-origin[0], x)
+    console.time('calculate width, height & new origin')
+    const width = Math.max(boundary.width, x + imageData.width) - Math.min(0, x)
     const height =
-      Math.max(canvas.height - origin[1], y + imageData.height) -
-      Math.min(-origin[1], y)
-    if (x < -origin[0]) {
-      lastOrigin[0] = origin[0]
-      origin[0] = -x
+      Math.max(boundary.height, y + imageData.height) - Math.min(0, y)
+    boundary.width = width
+    boundary.height = height
+
+    if (boundary.loc === null) {
+      boundary.loc = {
+        x,
+        y,
+      }
     } else {
-      lastOrigin[0] = origin[0]
+      boundary.loc.x = Math.min(x, boundary.loc.x)
+      boundary.loc.y = Math.min(y, boundary.loc.y)
     }
-    if (y < -origin[1]) {
-      lastOrigin[1] = origin[1]
-      origin[1] = -y
-    } else {
-      lastOrigin[1] = origin[1]
-    }
+
+    console.timeEnd('calculate width, height & new origin')
 
     // resize
-    const prevImgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    canvas.width = width
-    canvas.height = height
-    ctx.putImageData(
-      prevImgData,
-      lastOrigin[0] === origin[0] ? 0 : origin[0] - lastOrigin[0],
-      lastOrigin[1] === origin[1] ? 0 : origin[1] - lastOrigin[1]
-    )
-    ctx.translate(...origin)
+    // 当内容会溢出画布时，resize 画布，这是一个十分消耗性能的操作（具体来说 getImageData 不够快）
+    // 所以一开始画布设置的较大以避免这种操作
+    // if (boundary.loc.x < - padding.left || boundary.loc.y < -padding.top || boundary)
+
+    // console.time('resize')
+    // console.time('getImageData')
+    // const prevImgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    // console.timeEnd('getImageData')
+    // console.time('canvas mutation')
+    // canvas.width = width
+    // canvas.height = height
+    // console.timeEnd('canvas mutation')
+    // console.time('putImageData')
+    // ctx.putImageData(
+    //   prevImgData,
+    //   lastOrigin[0] === origin[0] ? 0 : origin[0] - lastOrigin[0],
+    //   lastOrigin[1] === origin[1] ? 0 : origin[1] - lastOrigin[1]
+    // )
+    // console.timeEnd('putImageData')
+    // ctx.translate(...origin)
+    // console.timeEnd('resize')
 
     // draw
+    console.time('draw')
     ctx.drawImage(getCanvasWithImageData(imageData), x, y)
+    console.timeEnd('draw')
   })
   const span = new Date().valueOf() - startT
   if (span > 50) {
@@ -208,9 +305,14 @@ export const mergeImageFragments = imageFragments => {
       `merging imageFragments ${imageFragments.length} takes ${span}ms`
     )
   }
-  const result = ctx.getImageData(0, 0, canvas.width, canvas.height)
-  return createImageFragment(result, {
-    x: -origin[0],
-    y: -origin[1],
-  })
+  if (boundary.loc === null) {
+    return null
+  }
+  const result = ctx.getImageData(
+    boundary.loc.x + padding.left,
+    boundary.loc.y + padding.top,
+    boundary.width,
+    boundary.height
+  )
+  return createImageFragment(result, boundary.loc)
 }

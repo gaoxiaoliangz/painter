@@ -165,22 +165,23 @@ const App = () => {
             self.pencilPath[self.pencilPath.length - 1],
             self.pencilPath[self.pencilPath.length - 2]
           )
-          const imageFragment = mergeImageFragments(
-            dots.map(dot => {
-              const circle = createShape('cycle', {
-                x: dot.x,
-                y: dot.y,
-                r: 3,
-                color,
-              })
-              return shapeToImageFragment(circle)
+          console.time('dots')
+          const dotImgFrags = dots.map(dot => {
+            const circle = createShape('cycle', {
+              x: dot.x,
+              y: dot.y,
+              r: 3,
+              color,
             })
-          )
+            return shapeToImageFragment(circle)
+          })
+          console.timeEnd('dots')
+          const merged = mergeImageFragments(dotImgFrags)
           updateLayer({
             id: activeLayer.id,
             imageFragment: activeLayer.imageFragment
-              ? mergeImageFragments([activeLayer.imageFragment, imageFragment])
-              : imageFragment,
+              ? mergeImageFragments([activeLayer.imageFragment, merged])
+              : merged,
           })
           break
         }
