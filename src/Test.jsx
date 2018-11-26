@@ -33,6 +33,7 @@ const Test = props => {
       ctx.putImageData(frag.imageData, frag.x, frag.y)
     }
     // putFrag(mergeImageFragments([imageFrag]))
+    // putFrag(imageFrag)
     putFrag(merged)
   }, [])
 
