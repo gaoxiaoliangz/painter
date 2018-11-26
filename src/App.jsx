@@ -37,6 +37,7 @@ const App = () => {
   const [activeTool, setTool] = useState('cycle')
   const [color, setColor] = useState('#000000')
   const [layers, updateLayers] = userImmerState([])
+  const [canvasOffset, updateCanvasOffset] = useState([0, 0])
   const selectedLayers = layers.filter(l => l.selected)
   const activeLayer = selectedLayers.length === 1 ? selectedLayers[0] : null
 
@@ -75,23 +76,28 @@ const App = () => {
       self.isDown = true
       const { imageFragment } = activeLayer
       self.startDot = {
-        x: e.pageX,
-        y: e.pageY,
+        x: e.pageX - canvasOffset[0],
+        y: e.pageY - canvasOffset[1],
       }
       self.lastImageFragment = imageFragment
+      self.lastCanvasOffset = canvasOffset
     }
   }
 
   const handleMouseMove = e => {
     if (self.isDown) {
+      const moved = [
+        e.pageX - self.lastCanvasOffset[0] - self.startDot.x,
+        e.pageY - self.lastCanvasOffset[1] - self.startDot.y,
+      ]
       switch (activeTool) {
         case 'rect': {
           const imageFragment = shapeToImageFragment(
             createShape('rect', {
               x: self.startDot.x,
               y: self.startDot.y,
-              width: e.pageX - self.startDot.x,
-              height: e.pageY - self.startDot.y,
+              width: moved[0],
+              height: moved[1],
               color,
             })
           )
@@ -106,8 +112,8 @@ const App = () => {
 
         case 'cycle': {
           const r = calcDistance(self.startDot, {
-            x: e.pageX,
-            y: e.pageY,
+            x: e.pageX - canvasOffset[0],
+            y: e.pageY - canvasOffset[1],
           })
           const imageFragment = shapeToImageFragment(
             createShape('cycle', {
@@ -126,17 +132,26 @@ const App = () => {
           break
         }
 
-        case 'move':
+        case 'move': {
           // @todo: shapes
           updateLayer({
             id: activeLayer.id,
             imageFragment: {
               ...self.lastImageFragment,
-              x: self.lastImageFragment.x + e.pageX - self.startDot.x,
-              y: self.lastImageFragment.y + e.pageY - self.startDot.y,
+              x: self.lastImageFragment.x + moved[0],
+              y: self.lastImageFragment.y + moved[1],
             },
           })
           break
+        }
+
+        case 'pan': {
+          updateCanvasOffset([
+            self.lastCanvasOffset[0] + moved[0],
+            self.lastCanvasOffset[1] + moved[1],
+          ])
+          break
+        }
 
         default:
           throw new Error(`Unknown tool ${activeTool}`)
@@ -150,6 +165,7 @@ const App = () => {
 
   return (
     <div
+      className="app"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -160,7 +176,16 @@ const App = () => {
           setTool(tool)
         }}
       />
-      <Canvas ref={canvasRef} layers={layers} width="500" height="500" />
+      <Canvas
+        style={{
+          left: canvasOffset[0],
+          top: canvasOffset[1],
+        }}
+        ref={canvasRef}
+        layers={layers}
+        width="500"
+        height="500"
+      />
       <div className="right-panels">
         <Panel
           title="Layers"

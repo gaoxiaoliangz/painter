@@ -44,6 +44,20 @@ export const createShape = (type, meta) => {
 }
 
 const createCanvas = config => {
+  let canvasesWrap = document.getElementById('canvases-wrap')
+  if (!canvasesWrap) {
+    canvasesWrap = document.createElement('div')
+    canvasesWrap.id = 'canvases-wrap'
+    canvasesWrap.style = `
+      // position: fixed;
+      // left: 0;
+      // top: 0;
+      // height: 100%;
+      // overflow: auto;
+      margin-top: 500px;
+    `
+    document.body.appendChild(canvasesWrap)
+  }
   const canvas = document.createElement('canvas')
   const title = document.createElement('p')
   canvas.width = 1
@@ -52,7 +66,7 @@ const createCanvas = config => {
   const wrap = document.createElement('div')
   wrap.appendChild(title)
   wrap.appendChild(canvas)
-  document.body.appendChild(wrap)
+  canvasesWrap.appendChild(wrap)
   canvas.setAttribute('class', config.class)
   // newCanvas.setAttribute('style', 'position: fixed; top: -999em; background: gray')
   canvas.setAttribute('style', 'background: gray')
