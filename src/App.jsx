@@ -1,5 +1,4 @@
 import React, { useRef, useEffect, useState } from 'react'
-import _ from 'lodash'
 import MainTools from './components/MainTools/MainTools'
 import Panel from './components/Panel/Panel'
 import PanelButton from './components/PanelButton/PanelButton'
@@ -13,24 +12,8 @@ import {
   shapeToImageFragment,
 } from './core/canvas'
 import ColorPicker from './components/ColorPicker/ColorPicker'
-import { calcDistance } from './utils'
+import { calcDistance, interpolateDots } from './utils'
 import QuickFuncs from './components/QuickFuncs/QuickFuncs'
-
-const interpolateDots = (dot1, dot2, span = 3) => {
-  const dist = calcDistance(dot1, dot2)
-  const count = Math.round(dist / span)
-  const distX = dot2.x - dot1.x
-  const stepX = distX / count
-  const distY = dot2.y - dot1.y
-  const stepY = distY / count
-  const result = _.times(count, n => {
-    return {
-      x: dot1.x + n * stepX,
-      y: dot1.y + n * stepY,
-    }
-  })
-  return result
-}
 
 const App = () => {
   const createLayer = initialState => {

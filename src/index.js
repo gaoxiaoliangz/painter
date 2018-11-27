@@ -3,11 +3,20 @@ import ReactDOM from 'react-dom'
 import './index.scss'
 import App from './App'
 import Test from './Test'
+import PerfTest from './PerfTest'
 import * as serviceWorker from './serviceWorker'
 
-const isTest = false
+const use = 'PerfTest'
 
-ReactDOM.render(isTest ? <Test /> : <App />, document.getElementById('root'))
+const components = {
+  App,
+  Test,
+  PerfTest,
+}
+
+const Root = components[use]
+
+ReactDOM.render(<Root />, document.getElementById('root'))
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

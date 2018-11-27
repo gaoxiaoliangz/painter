@@ -139,6 +139,46 @@ export const shapeToImageFragment = ({ type, x, y, ...rest }) => {
   return createImageFragment(imageData, { x: fragX, y: fragY })
 }
 
+export const drawShapeOnCanvas = ({ type, x, y, ...rest }, canvas) => {
+  const ctx = canvas.getContext('2d')
+  let fragX = x
+  let fragY = y
+  ctx.save()
+
+  switch (type) {
+    case 'rect': {
+      const { width, height, color /*stroke*/ } = rest
+      ctx.fillStyle = color
+      if (width < 0) {
+        fragX = x + width
+      }
+      if (height < 0) {
+        fragY = y + height
+      }
+      // @todo: 会不会有问题？
+      ctx.fillRect(fragX, fragY, Math.abs(width), Math.abs(height))
+      break
+    }
+
+    case 'cycle': {
+      const { r, color } = rest
+      ctx.beginPath()
+      ctx.fillStyle = color
+      fragX = x - r
+      fragY = y - r
+      ctx.arc(fragX, fragY, r, 0, Math.PI * 2)
+      ctx.fill()
+      break
+    }
+
+    default:
+      throw new Error(`Unknown type ${type}`)
+  }
+
+  ctx.restore()
+}
+
+
 export const imageDataToDataURL = imageData => {
   const canvas = offscreenCanvases.imageDataToDataURL
   const ctx = canvas.getContext('2d')
@@ -237,7 +277,7 @@ export const mergeImageFragmentsOld = imageFragments => {
 
 export const mergeImageFragments = imageFragments => {
   console.log(`--- mergeImageFragments new (${imageFragments.length}) ---`)
-  console.time('mergeImageFragments')
+  console.time(`--- mergeImageFragments new (${imageFragments.length}) ---`)
   const startT = new Date().valueOf()
   const padding = { top: 50, right: 50, bottom: 50, left: 50 }
   const initialWidth = 500
@@ -325,6 +365,6 @@ export const mergeImageFragments = imageFragments => {
       `merging imageFragments ${imageFragments.length} takes ${span}ms`
     )
   }
-  console.timeEnd('mergeImageFragments')
+  console.timeEnd(`--- mergeImageFragments new (${imageFragments.length}) ---`)
   return finalResult
 }
