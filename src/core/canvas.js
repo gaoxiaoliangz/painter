@@ -236,7 +236,7 @@ export const mergeImageFragmentsOld = imageFragments => {
 }
 
 export const mergeImageFragments = imageFragments => {
-  console.log('--- mergeImageFragments new ---')
+  console.log(`--- mergeImageFragments new (${imageFragments.length}) ---`)
   console.time('mergeImageFragments')
   const startT = new Date().valueOf()
   const padding = { top: 50, right: 50, bottom: 50, left: 50 }
