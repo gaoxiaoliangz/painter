@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useImperativeMethods } from 'react'
+import React, { useEffect, useRef, useImperativeHandle } from 'react'
 import pt from 'prop-types'
 import { mergeImageFragments, shapeToImageFragment } from '../../core/canvas'
 import { reverse } from '../../utils'
@@ -26,7 +26,7 @@ const Canvas = React.forwardRef(({ layers, ...rest }, ref) => {
     renderLayers()
   })
 
-  useImperativeMethods(ref, () => {
+  useImperativeHandle(ref, () => {
     return {
       renderLayers,
       // 不能直接写 canvas?
@@ -41,14 +41,10 @@ const Canvas = React.forwardRef(({ layers, ...rest }, ref) => {
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     const imageFragment = mergeImageFragments(
-      reverse(layers.filter(layer => layer.visible).map(layerToImageFragment))
+      reverse(layers.filter(layer => layer.visible).map(layerToImageFragment)),
     )
     if (imageFragment) {
-      ctx.putImageData(
-        imageFragment.imageData,
-        imageFragment.x,
-        imageFragment.y
-      )
+      ctx.putImageData(imageFragment.imageData, imageFragment.x, imageFragment.y)
     } else {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
     }

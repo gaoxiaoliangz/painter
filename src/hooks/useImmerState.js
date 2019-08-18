@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import produce from 'immer'
 
-const userImmerState = initialState => {
+const useImmerState = initialState => {
   const [state, setState] = useState(initialState)
 
   const updater = producer => {
@@ -11,4 +11,4 @@ const userImmerState = initialState => {
   return [state, updater]
 }
 
-export default userImmerState
+export default useImmerState
