@@ -4,14 +4,10 @@ import MainTools from './components/MainTools/MainTools'
 import Panel from './components/Panel/Panel'
 import PanelButton from './components/PanelButton/PanelButton'
 import Layer from './components/Layer/Layer'
-import userImmerState from './hooks/useImmerState'
+import useImmerState from './hooks/useImmerState'
 import './App.scoped.scss'
 import Canvas from './components/Canvas/Canvas'
-import {
-  createShape,
-  mergeImageFragments,
-  shapeToImageFragment,
-} from './core/canvas'
+import { createShape, mergeImageFragments, shapeToImageFragment } from './core/canvas'
 import ColorPicker from './components/ColorPicker/ColorPicker'
 import { calcDistance } from './utils'
 import QuickFuncs from './components/QuickFuncs/QuickFuncs'
@@ -55,7 +51,7 @@ const App = () => {
   const [activeTool, setTool] = useState('pencil')
   const [color, setColor] = useState('#000000')
   const [zoom, setZoom] = useState(1)
-  const [layers, updateLayers] = userImmerState([])
+  const [layers, updateLayers] = useImmerState([])
   const [canvasOffset, updateCanvasOffset] = useState([100, 50])
   const selectedLayers = layers.filter(l => l.selected)
   const activeLayer = selectedLayers.length === 1 ? selectedLayers[0] : null
@@ -88,7 +84,7 @@ const App = () => {
       }),
       ...draftLayers,
     ])
-  }, [])
+  }, []) // eslint-disable-line
 
   const handleMouseDown = e => {
     if (activeLayer) {
@@ -119,7 +115,7 @@ const App = () => {
               width: moved[0],
               height: moved[1],
               color,
-            })
+            }),
           )
           updateLayer({
             id: activeLayer.id,
@@ -141,7 +137,7 @@ const App = () => {
               y: self.startDot.y,
               r,
               color,
-            })
+            }),
           )
           updateLayer({
             id: activeLayer.id,
@@ -163,7 +159,7 @@ const App = () => {
           }
           const dots = interpolateDots(
             self.pencilPath[self.pencilPath.length - 1],
-            self.pencilPath[self.pencilPath.length - 2]
+            self.pencilPath[self.pencilPath.length - 2],
           )
           const imageFragment = mergeImageFragments(
             dots.map(dot => {
@@ -174,7 +170,7 @@ const App = () => {
                 color,
               })
               return shapeToImageFragment(circle)
-            })
+            }),
           )
           updateLayer({
             id: activeLayer.id,
@@ -278,7 +274,7 @@ const App = () => {
                           ...layer,
                           selected: idx === 0,
                         }
-                      })
+                      }),
                     )
                   }}
                 />

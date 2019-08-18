@@ -3,20 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@gxl/react-scripts": "2.2.5",
+    "@craco/craco": "^5.3.0",
     "classnames": "^2.2.6",
+    "craco-plugin-scoped-css": "^0.3.3",
     "immer": "^1.8.0",
-    "react": "^16.7.0-alpha.2",
+    "node-sass": "4.12.0",
+    "react": "^16.9.0",
     "react-color": "^2.14.1",
-    "react-dom": "^16.7.0-alpha.2",
-    "node-sass": "4.12.0"
+    "react-dom": "^16.9.0",
+    "react-scripts": "^3.1.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "now-build": "yarn build"
+    "start": "craco start",
+    "build": "craco build",
+    "test": "craco test",
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -26,8 +27,5 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ],
-  "devDependencies": {
-    "node-sass": "^4.10.0"
-  }
+  ]
 }
